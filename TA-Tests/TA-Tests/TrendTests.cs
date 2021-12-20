@@ -63,7 +63,7 @@ namespace TA_UnitTests
         {
             double rsi = _trends.RSI(_history, 14);
 
-            Assert.True(rsi == 45.01);
+            Assert.True(rsi == 43.48);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using TechnicalAnalysisCalculations.Models;
+﻿using System.Diagnostics;
+using TechnicalAnalysisCalculations.Models;
 
 namespace TechnicalAnalysisCalculations.Calculators
 {
@@ -137,7 +138,15 @@ namespace TechnicalAnalysisCalculations.Calculators
 
             historyList = new(historyList.OrderByDescending(x => x.Date));
 
-            return Math.Round(100 - (100 / (1 + (AverageGain(history, period, start, start) / AverageLoss(history, period, start, start)))), 2);
+            double avgLoss = AverageLoss(history, period, start, start);
+            double avgGain = AverageGain(history, period, start, start);
+
+
+
+            if (avgLoss == 0) return 100;
+            if (avgGain == 0) return 0;
+
+            return Math.Round(100 - (100 / (1 + (avgGain / avgLoss))), 2);
         }
 
         private double AverageGain(IEnumerable<IHistory> history, int period, int start, int index)
@@ -150,18 +159,20 @@ namespace TechnicalAnalysisCalculations.Calculators
                 
                 for (int i = index; i < period + index; i++)
                 {
-                    if (h[i].Close > h[i].Open)
-                        sum += (h[i].Close - h[i].Open) / h[i].Open;
+                    if (h[i].Close > h[i+1].Close)
+                        sum += (h[i].Close - h[i+1].Close) / h[i+1].Close;
                 }
 
-                return sum / period;
+                double avg = sum / period;
+
+                return avg;
             }
             else
             {
                 double previous = AverageGain(history, period, start, index + 1);
-                double current = Math.Max((h[index].Close - h[index].Open) / h[index].Open, 0);
+                double current = Math.Max((h[index].Close - h[index+1].Close) / h[index+1].Close, 0);
 
-                return (previous * (period - 1) + current) / period;
+                return ((previous * (period - 1)) + current) / period;
             }
         }
 
@@ -175,8 +186,8 @@ namespace TechnicalAnalysisCalculations.Calculators
 
                 for (int i = index; i < period + index; i++)
                 {
-                    if (h[i].Open > h[i].Close)
-                        sum += (h[i].Open - h[i].Close) / h[i].Open;
+                    if (h[i+1].Close > h[i].Close)
+                        sum += (h[i+1].Close - h[i].Close) / h[i+1].Close;
                 }
 
                 return sum / period;
@@ -184,9 +195,9 @@ namespace TechnicalAnalysisCalculations.Calculators
             else
             {
                 double previous = AverageLoss(history, period, start, index + 1);
-                double current = Math.Max((h[index].Open - h[index].Close) / h[index].Open, 0);
+                double current = Math.Max((h[index+1].Close - h[index].Close) / h[index+1].Close, 0);
 
-                return (previous * (period - 1) + current) / period;
+                return ((previous * (period - 1)) + current) / period;
             }
         }
 
